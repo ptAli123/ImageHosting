@@ -53,24 +53,21 @@ class PhotosController extends Controller
         }
     }
 
-    function checkMail($email,$data) {
-        dd($data['shared']);
+    function checkMail($email,$data,$conn) {
+        $data = $conn->findOne(["shared.mail" => $email]);
+
     }
     function accessPhotoLogin(Request $request) {
         $path1 = $_SERVER['HTTP_HOST']."/photo/storage/photos/".$request->filename;
-        dd($path1);
         try{
             $collection = new DatabaseConnectionService();
             $conn = $collection->getConnection('photos');
             $data = $conn->findOne(array("photo" => $path1));
-            dd($data);
         }catch(Exception $ex){
             return response()->json(['message' => $ex->getMessage()],422);
         }
-        dd($data);
         if ($data && $data['private'] == 1) {
-            dd($data['shared']);
-            if ($this->checkMail($request->email,$data)) {
+            if ($this->checkMail($request->email,$data,$conn)) {
                 $headers = ["Cache-Control" => "no-store, no-cache, must-revalidate, max-age=0"];
                 $path = storage_path("app/photos".'/'.$request->filename);
                 if (file_exists($path)) {
