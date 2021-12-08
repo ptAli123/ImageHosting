@@ -35,28 +35,49 @@ class PhotosController extends Controller
         return response()->success();
     }
 
-    function downloadPhoto($filename) {
-        $headers = ["Cache-Control" => "no-store, no-cache, must-revalidate, max-age=0"];
-        $path = storage_path("app/photos".'/'.$filename);
-        if (file_exists($path)) {
-            return response()->download($path, null, $headers, null);
-        }
-        return response()->json(["error"=>"error downloading file"],400);
-    }
     function accessPhoto(Request $request, $filename) {
-        $path = $_SERVER['HTTP_HOST']."/photo/storage/photos/".$filename;
+        $path1 = $_SERVER['HTTP_HOST']."/photo/storage/photos/".$filename;
         try{
             $collection = new DatabaseConnectionService();
             $conn = $collection->getConnection('photos');
-            $data = $conn->findOne(array("photo" => $path));
+            $data = $conn->findOne(array("photo" => $path1));
         }catch(Exception $ex){
             return response()->json(['message' => $ex->getMessage()],422);
         }
-
-        if ($data) {
-            if ($data['public'] == 1) {
-                $this->downloadPhoto($filename);
+        if ($data && $data['public'] == 1) {
+            $headers = ["Cache-Control" => "no-store, no-cache, must-revalidate, max-age=0"];
+            $path = storage_path("app/photos".'/'.$filename);
+            if (file_exists($path)) {
+                return response()->download($path, null, $headers, null);
             }
+        }
+    }
+
+    function checkMail($email,$data) {
+        dd($data['shared']);
+    }
+    function accessPhotoLogin(Request $request) {
+        $path1 = $_SERVER['HTTP_HOST']."/photo/storage/photos/".$request->filename;
+        dd($path1);
+        try{
+            $collection = new DatabaseConnectionService();
+            $conn = $collection->getConnection('photos');
+            $data = $conn->findOne(array("photo" => $path1));
+            dd($data);
+        }catch(Exception $ex){
+            return response()->json(['message' => $ex->getMessage()],422);
+        }
+        dd($data);
+        if ($data && $data['private'] == 1) {
+            dd($data['shared']);
+            if ($this->checkMail($request->email,$data)) {
+                $headers = ["Cache-Control" => "no-store, no-cache, must-revalidate, max-age=0"];
+                $path = storage_path("app/photos".'/'.$request->filename);
+                if (file_exists($path)) {
+                    return response()->download($path, null, $headers, null);
+                }
+            }
+
         }
     }
 
@@ -118,13 +139,12 @@ class PhotosController extends Controller
         try{
             $collection = new DatabaseConnectionService();
             $conn = $collection->getConnection('photos');
-            // $id = new \MongoDB\BSON\ObjectId($request->photo_id);
-            //$conn->updateOne(array("user_id"=>$request->data->_id,"_id" => $id),array('$set'=>array("public" => 0,"hidden"=>1,"private"=>0)));
             $conn->updateOne(array('_id'=>$id),array('$unset'=>array('shared'=>'')));
         }catch(Exception $ex){
             return response()->json(['message' => $ex->getMessage()],422);
         }
     }
+
     function makePhotoHidden(Request $request) {
         try{
             $collection = new DatabaseConnectionService();
