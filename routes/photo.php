@@ -16,6 +16,7 @@ Route::post('/remove-photo',[PhotosController::class,'removePhoto'])->middleware
 
 Route::post('/list-photo',[PhotosController::class,'listPhoto'])->middleware("userAuth");
 Route::post('/search-photo',[PhotosController::class,'searchPhoto'])->middleware("userAuth");
+Route::post('/generate-link',[PhotosController::class,'generateLink'])->middleware("userAuth");
 
 
 Route::any('/storage/photos/{filename}',[PhotosController::class,'accessPhoto']);
@@ -23,4 +24,5 @@ Route::any('/storage/photos/{filename}',[PhotosController::class,'accessPhoto'])
 
 Route::post('/make-photo-public',[PhotosController::class,'makePhotoPublic'])->middleware("userAuth");
 Route::post('/make-photo-private',[PhotosController::class,'makePhotoPrivate'])->middleware("userAuth")->middleware("forgetPasswordAuth");
-
+Route::post('/make-photo-hidden',[PhotosController::class,'makePhotoHidden'])->middleware("userAuth");
+Route::post('/remove-specific-private-Mail',[PhotosController::class,'removeSpecificPrivateMail'])->middleware("userAuth");

@@ -35,13 +35,41 @@ class PhotosController extends Controller
         return response()->success();
     }
 
-    function accessPhoto(Request $request, $filename) {
+    function downloadPhoto($filename) {
         $headers = ["Cache-Control" => "no-store, no-cache, must-revalidate, max-age=0"];
         $path = storage_path("app/photos".'/'.$filename);
         if (file_exists($path)) {
             return response()->download($path, null, $headers, null);
         }
         return response()->json(["error"=>"error downloading file"],400);
+    }
+    function accessPhoto(Request $request, $filename) {
+        $path = $_SERVER['HTTP_HOST']."/photo/storage/photos/".$filename;
+        try{
+            $collection = new DatabaseConnectionService();
+            $conn = $collection->getConnection('photos');
+            $data = $conn->findOne(array("photo" => $path));
+        }catch(Exception $ex){
+            return response()->json(['message' => $ex->getMessage()],422);
+        }
+
+        if ($data) {
+            if ($data['public'] == 1) {
+                $this->downloadPhoto($filename);
+            }
+        }
+    }
+
+    function generateLink(Request $request) {
+        try{
+            $collection = new DatabaseConnectionService();
+            $conn = $collection->getConnection('photos');
+            $id = new \MongoDB\BSON\ObjectId($request->photo_id);
+            $data = $conn->findOne(array('_id' => $id,"user_id" => $request->data->_id));
+        }catch(Exception $ex){
+            return response()->json(['message' => $ex->getMessage()],422);
+        }
+        return response()->json(["Link" => $data['photo']]);
     }
 
     function removePhoto(Request $request) {
@@ -86,12 +114,37 @@ class PhotosController extends Controller
         return response()->json($photosArr);
     }
 
+    function removeMails($id) {
+        try{
+            $collection = new DatabaseConnectionService();
+            $conn = $collection->getConnection('photos');
+            // $id = new \MongoDB\BSON\ObjectId($request->photo_id);
+            //$conn->updateOne(array("user_id"=>$request->data->_id,"_id" => $id),array('$set'=>array("public" => 0,"hidden"=>1,"private"=>0)));
+            $conn->updateOne(array('_id'=>$id),array('$unset'=>array('shared'=>'')));
+        }catch(Exception $ex){
+            return response()->json(['message' => $ex->getMessage()],422);
+        }
+    }
+    function makePhotoHidden(Request $request) {
+        try{
+            $collection = new DatabaseConnectionService();
+            $conn = $collection->getConnection('photos');
+            $id = new \MongoDB\BSON\ObjectId($request->photo_id);
+            $conn->updateOne(array("user_id"=>$request->data->_id,"_id" => $id),array('$set'=>array("public" => 0,"hidden"=>1,"private"=>0)));
+            $this->removeMails($id);
+        }catch(Exception $ex){
+            return response()->json(['message' => $ex->getMessage()],422);
+        }
+        return response()->success();
+    }
+
     function makePhotoPublic(Request $request) {
         try{
             $collection = new DatabaseConnectionService();
             $conn = $collection->getConnection('photos');
             $id = new \MongoDB\BSON\ObjectId($request->photo_id);
             $conn->updateOne(array("user_id"=>$request->data->_id,"_id" => $id),array('$set'=>array("public" => 1,"hidden"=>0,"private"=>0)));
+            $this->removeMails($id);
         }catch(Exception $ex){
             return response()->json(['message' => $ex->getMessage()],422);
         }
@@ -105,6 +158,18 @@ class PhotosController extends Controller
             $id = new \MongoDB\BSON\ObjectId($request->photo_id);
             $conn->updateOne(array("user_id"=>$request->data->_id,"_id" => $id),array('$set'=>array("public" => 0,"hidden"=>0,"private"=>1)));
             $conn->updateOne(["user_id" => $request->data->_id,"_id" => $id], ['$push'=>["shared"=>["mail"=>$request->email]]]);
+        }catch(Exception $ex){
+            return response()->json(['message' => $ex->getMessage()],422);
+        }
+        return response()->success();
+    }
+
+    function removeSpecificPrivateMail(Request $request) {
+        try{
+            $collection = new DatabaseConnectionService();
+            $conn = $collection->getConnection('photos');
+            $id = new \MongoDB\BSON\ObjectId($request->photo_id);
+            $conn->updateOne(["user_id"=>$request->data->_id,"_id" => $id, "shared.mail"=>$request->email,"private" => 1], ['$pull'=>["shared"=>["mail"=>$request->email]]]);
         }catch(Exception $ex){
             return response()->json(['message' => $ex->getMessage()],422);
         }
