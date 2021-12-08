@@ -29,7 +29,7 @@ class ForgetPasswordMiddleware
             return $next($request);
         }
         else{
-            return response()->json(["message" => "Wronge Credentials"], 404);
+            return response()->json(["message" => "Wrong Credentials"], 404);
         }
     }
 }

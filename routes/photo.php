@@ -21,5 +21,6 @@ Route::post('/search-photo',[PhotosController::class,'searchPhoto'])->middleware
 Route::any('/storage/photos/{filename}',[PhotosController::class,'accessPhoto']);
 
 
-Route::post('/make-',[PhotosController::class,'searchPhoto'])->middleware("userAuth");
+Route::post('/make-photo-public',[PhotosController::class,'makePhotoPublic'])->middleware("userAuth");
+Route::post('/make-photo-private',[PhotosController::class,'makePhotoPrivate'])->middleware("userAuth")->middleware("forgetPasswordAuth");
 

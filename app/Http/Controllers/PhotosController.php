@@ -45,34 +45,70 @@ class PhotosController extends Controller
     }
 
     function removePhoto(Request $request) {
-        $collection = new DatabaseConnectionService();
-        $conn = $collection->getConnection('photos');
-        $id = new \MongoDB\BSON\ObjectId($request->photo_id);
-        $conn->deleteOne(array('_id' => $id));
+        try{
+            $collection = new DatabaseConnectionService();
+            $conn = $collection->getConnection('photos');
+            $id = new \MongoDB\BSON\ObjectId($request->photo_id);
+            $conn->deleteOne(array('_id' => $id,"user_id" => $request->data->_id));
+        }catch(Exception $ex){
+            return response()->json(['message' => $ex->getMessage()],422);
+        }
         return response()->success();
     }
 
     function listPhoto(Request $request) {
-        $collection = new DatabaseConnectionService();
-        $conn = $collection->getConnection('photos');
-        $photos = $conn->find(['user_id' => $request->data->_id]);
-        $photosArr = json_decode(json_encode($photos->toArray(),true));
+        try{
+            $collection = new DatabaseConnectionService();
+            $conn = $collection->getConnection('photos');
+            $photos = $conn->find(['user_id' => $request->data->_id]);
+            $photosArr = json_decode(json_encode($photos->toArray(),true));
+        }catch(Exception $ex){
+            return response()->json(['message' => $ex->getMessage()],422);
+        }
         return response()->json($photosArr);
     }
 
     function searchPhoto(Request $request) {
-        $collection = new DatabaseConnectionService();
-        $conn = $collection->getConnection('photos');
-        $searchPera = [];
-        foreach ($request->all() as $key => $value) {
-            if (in_array($key, ['date','time','name', 'extensions', 'hidden','private','public'])) {
-                $searchPera[$key]=$value;
+        try{
+            $collection = new DatabaseConnectionService();
+            $conn = $collection->getConnection('photos');
+            $searchPera = [];
+            foreach ($request->all() as $key => $value) {
+                if (in_array($key, ['date','time','name', 'extensions', 'hidden','private','public'])) {
+                    $searchPera[$key]=$value;
+                }
             }
+            $photos = $conn->find($searchPera);
+        }catch(Exception $ex){
+            return response()->json(['message' => $ex->getMessage()],422);
         }
-        $photos = $conn->find($searchPera);
         $photosArr = json_decode(json_encode($photos->toArray(),true));
         return response()->json($photosArr);
     }
 
-    
+    function makePhotoPublic(Request $request) {
+        try{
+            $collection = new DatabaseConnectionService();
+            $conn = $collection->getConnection('photos');
+            $id = new \MongoDB\BSON\ObjectId($request->photo_id);
+            $conn->updateOne(array("user_id"=>$request->data->_id,"_id" => $id),array('$set'=>array("public" => 1,"hidden"=>0,"private"=>0)));
+        }catch(Exception $ex){
+            return response()->json(['message' => $ex->getMessage()],422);
+        }
+        return response()->success();
+    }
+
+    function makePhotoPrivate(Request $request) {
+        try{
+            $collection = new DatabaseConnectionService();
+            $conn = $collection->getConnection('photos');
+            $id = new \MongoDB\BSON\ObjectId($request->photo_id);
+            $conn->updateOne(array("user_id"=>$request->data->_id,"_id" => $id),array('$set'=>array("public" => 0,"hidden"=>0,"private"=>1)));
+            $conn->updateOne(["user_id" => $request->data->_id,"_id" => $id], ['$push'=>["shared"=>["mail"=>$request->email]]]);
+        }catch(Exception $ex){
+            return response()->json(['message' => $ex->getMessage()],422);
+        }
+        return response()->success();
+    }
+
 }
