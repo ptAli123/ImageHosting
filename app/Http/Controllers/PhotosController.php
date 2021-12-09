@@ -50,15 +50,23 @@ class PhotosController extends Controller
             if (file_exists($path)) {
                 return response()->download($path, null, $headers, null);
             }
+        } else {
+            return response()->json(['message' => "you are not allowed"]);
         }
     }
 
-    function checkMail($email,$data,$conn) {
+    function checkMail($email,$conn) {
         $data = $conn->findOne(["shared.mail" => $email]);
-
+        if ($data) {
+            return true;
+        } else {
+            return false;
+        }
     }
+
     function accessPhotoLogin(Request $request) {
-        $path1 = $_SERVER['HTTP_HOST']."/photo/storage/photos/".$request->filename;
+        $filename = explode('/',$request->filename);
+        $path1 = $_SERVER['HTTP_HOST']."/photo/storage/photos/".$filename[4];
         try{
             $collection = new DatabaseConnectionService();
             $conn = $collection->getConnection('photos');
@@ -67,14 +75,34 @@ class PhotosController extends Controller
             return response()->json(['message' => $ex->getMessage()],422);
         }
         if ($data && $data['private'] == 1) {
-            if ($this->checkMail($request->email,$data,$conn)) {
+            if ($this->checkMail($request->email,$conn)) {
                 $headers = ["Cache-Control" => "no-store, no-cache, must-revalidate, max-age=0"];
-                $path = storage_path("app/photos".'/'.$request->filename);
+                $path = storage_path("app/photos".'/'.$filename[4]);
                 if (file_exists($path)) {
                     return response()->download($path, null, $headers, null);
                 }
             }
+        } else {
+            return response()->json(['message' => "you are not allowed"]);
+        }
+    }
 
+    function accessPhotoHidden(Request $request) {
+        $filename = explode('/',$request->filename);
+        $path1 = $_SERVER['HTTP_HOST']."/photo/storage/photos/".$filename[4];
+        try{
+            $collection = new DatabaseConnectionService();
+            $conn = $collection->getConnection('photos');
+            $data = $conn->findOne(array("photo" => $request->filename));
+        }catch(Exception $ex){
+            return response()->json(['message' => $ex->getMessage()],422);
+        }
+        if ($data && $data['hidden'] == 1) {
+            $headers = ["Cache-Control" => "no-store, no-cache, must-revalidate, max-age=0"];
+            $path = storage_path("app/photos".'/'.$filename[4]);
+            if (file_exists($path)) {
+                return response()->download($path, null, $headers, null);
+            }
         }
     }
 

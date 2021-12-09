@@ -21,6 +21,7 @@ Route::post('/generate-link',[PhotosController::class,'generateLink'])->middlewa
 
 Route::any('/storage/photos/{filename}',[PhotosController::class,'accessPhoto']);
 Route::any('/access-Photo-login',[PhotosController::class,'accessPhotoLogin']);
+Route::any('/access-Photo-hidden',[PhotosController::class,'accessPhotoHidden'])->middleware("userAuth");
 // Route::any('/storage/photos/{filename}',function(Request $request, $filename){
 
 //     $headers = ["Cache-Control" => "no-store, no-cache, must-revalidate, max-age=0"];
