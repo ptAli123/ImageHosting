@@ -9,6 +9,11 @@ use Illuminate\Http\Request;
 
 class UpdateUserController extends Controller
 {
+    /**
+     * Take remember token and Credentials for update user profile
+     * update Credentials
+     * return success
+     */
     function userUpdate(UserUpdateRequest $request){
         $data_to_update = [];
         foreach ($request->all() as $key => $value) {

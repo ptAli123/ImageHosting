@@ -13,6 +13,11 @@ use Illuminate\Support\Facades\Hash;
 
 class LoginController extends Controller
 {
+     /**
+     * Take email and password
+     * verify email and password
+     * return jwt tokken
+     */
     function login(Request $request){
         try{
             $collection = new DatabaseConnectionService();
@@ -32,6 +37,11 @@ class LoginController extends Controller
         }
     }
 
+    /**
+     * Take remember token
+     * verify token and unset remember token
+     * return success
+     */
     function logout(Request $request){
         $collection = new DatabaseConnectionService();
         $conn = $collection->getConnection('users');

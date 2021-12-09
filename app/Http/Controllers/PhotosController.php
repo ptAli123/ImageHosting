@@ -66,7 +66,9 @@ class PhotosController extends Controller
     }
 
     /**
-     * Return true if given mail exist in embbeded mail otherwise false
+     * Take email, link related document and mongodb connection
+     * check mail exist in database or not
+     * Return true if exist otherwise false
      */
     function checkMail($email,$data,$conn) {
         $data1 = $conn->findOne(["_id" => $data['_id'],"shared.mail" => $email]);
@@ -79,8 +81,8 @@ class PhotosController extends Controller
 
     /**
      * Take photo link and mail
-     * Check photo is public or not
-     * return show Photo
+     * Check photo is private or not
+     * return show Photo or you are not allowed
      */
     function accessPhotoLogin(Request $request) {
         $filename = explode('/',$request->filename);
@@ -106,7 +108,9 @@ class PhotosController extends Controller
     }
 
     /**
-     * Return Photo if its hidden
+     * Take photo link
+     * Check photo is hidden or not
+     * return show Photo or you are not allowed
      */
     function accessPhotoHidden(Request $request) {
         $filename = explode('/',$request->filename);
@@ -124,11 +128,15 @@ class PhotosController extends Controller
             if (file_exists($path)) {
                 return response()->download($path, null, $headers, null);
             }
+        } else {
+            return response()->json(['message' => "you are not allowed"]);
         }
     }
 
     /**
-     * take
+     * Take user id and photo id
+     * Fetch photo document of that same user and photo
+     * return photo link
      */
     function generateLink(Request $request) {
         try{
@@ -141,6 +149,11 @@ class PhotosController extends Controller
         }
         return response()->json(["Link" => $data['photo']]);
     }
+    /**
+     * Take user id and photo id
+     * Delete photo document of that same user and photo
+     * return success message
+     */
 
     function removePhoto(Request $request) {
         try{
@@ -154,6 +167,12 @@ class PhotosController extends Controller
         return response()->success();
     }
 
+    /**
+     * Take user id
+     * Fetch all photos of that user
+     * return list of all photos
+     */
+
     function listPhoto(Request $request) {
         try{
             $collection = new DatabaseConnectionService();
@@ -165,6 +184,12 @@ class PhotosController extends Controller
         }
         return response()->json($photosArr);
     }
+
+    /**
+     * Take search perameters
+     * Fetch all sorted photos of that user
+     * return list of photos
+     */
 
     function searchPhoto(Request $request) {
         try{
@@ -184,6 +209,12 @@ class PhotosController extends Controller
         return response()->json($photosArr);
     }
 
+     /**
+     * Take photo id
+     * remove all embbeded mails
+     * return
+     */
+
     function removeMails($id) {
         try{
             $collection = new DatabaseConnectionService();
@@ -193,6 +224,12 @@ class PhotosController extends Controller
             return response()->json(['message' => $ex->getMessage()],422);
         }
     }
+
+     /**
+     * Take photo id and user id
+     * Make photo hidden and remove all the embbeded mails
+     * return success
+     */
 
     function makePhotoHidden(Request $request) {
         try{
@@ -207,6 +244,12 @@ class PhotosController extends Controller
         return response()->success();
     }
 
+    /**
+     * Take photo id and user id
+     * Make photo public and remove all the embbeded mails
+     * return success
+     */
+
     function makePhotoPublic(Request $request) {
         try{
             $collection = new DatabaseConnectionService();
@@ -220,18 +263,31 @@ class PhotosController extends Controller
         return response()->success();
     }
 
+    /**
+     * Take photo id, user id and user email by which you want to share photo
+     * Make photo private and embbeded that email
+     * return success
+     */
+
     function makePhotoPrivate(Request $request) {
         try{
             $collection = new DatabaseConnectionService();
             $conn = $collection->getConnection('photos');
             $id = new \MongoDB\BSON\ObjectId($request->photo_id);
             $conn->updateOne(array("user_id"=>$request->data->_id,"_id" => $id),array('$set'=>array("public" => 0,"hidden"=>0,"private"=>1)));
+            $Emails = explode(',',$request->email);
             $conn->updateOne(["user_id" => $request->data->_id,"_id" => $id], ['$push'=>["shared"=>["mail"=>$request->email]]]);
         }catch(Exception $ex){
             return response()->json(['message' => $ex->getMessage()],422);
         }
         return response()->success();
     }
+
+    /**
+     * Take photo id, user id and user email
+     * Delete that embbeded email
+     * return success
+     */
 
     function removeSpecificPrivateMail(Request $request) {
         try{

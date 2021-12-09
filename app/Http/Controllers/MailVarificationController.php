@@ -9,6 +9,12 @@ use Illuminate\Support\Facades\DB;
 
 class MailVarificationController extends Controller
 {
+    /**
+     * Take email and varify token
+     * verify otp token and email
+     * set email verified = 1 in database
+     * return success
+     */
     function confirmed($email,$varify_token){
         try{
             $collection = new DatabaseConnectionService();

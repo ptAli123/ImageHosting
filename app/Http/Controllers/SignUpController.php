@@ -4,14 +4,19 @@ namespace App\Http\Controllers;
 use Illuminate\Support\Facades\Hash;
 use App\Http\Requests\SignUpRequest;
 use App\Jobs\MailJob;
+use App\Mail\VarificationMail;
 use App\Services\DatabaseConnectionService;
 use Exception;
 use Illuminate\Http\Request;
-/**
- * Take sign up Credentials and send mail confirmation mail to user
- */
+use Illuminate\Support\Facades\Mail;
+
 class SignUpController extends Controller
 {
+    /**
+     * Take sign up Credentials
+     * save in database and send confirmation mail with otp
+     * return send mail message
+     */
     function signUp(SignUpRequest $request) {
         $varify_token=rand(100,100000);
         $collection = new DatabaseConnectionService();
@@ -34,10 +39,11 @@ class SignUpController extends Controller
         try{
             //$mail = new MailJob($request->email,$details);
             //dispatch($mail);
+            Mail::to($request->email)->send(new VarificationMail($details));
         }catch(Exception $ex){
             return response()->json(['message' => $ex->getMessage()],422);
         }
-        //return response()->json(["message"=>"mail send...."]);
-        return response()->json(['link' => 'http://127.0.0.1:8000/api/mail-confirmation/'.$request->email.'/'.$varify_token]);
+        return response()->json(["message"=>"mail send...."]);
+        //return response()->json(['link' => 'http://127.0.0.1:8000/api/mail-confirmation/'.$request->email.'/'.$varify_token]);
     }
 }
