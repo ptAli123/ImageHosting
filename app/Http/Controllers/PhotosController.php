@@ -9,6 +9,11 @@ use Illuminate\Http\Request;
 
 class PhotosController extends Controller
 {
+    /**
+     * Take sign up Credentials
+     * Save photo data in database
+     * return success
+     */
     function uploadPhoto(PhotoRequest $request) {
         try{
             $collection = new DatabaseConnectionService();
@@ -35,6 +40,11 @@ class PhotosController extends Controller
         return response()->success();
     }
 
+   /**
+     * Take photo link
+     * Check photo is public or not
+     * return show Photo
+     */
     function accessPhoto(Request $request, $filename) {
         $path1 = $_SERVER['HTTP_HOST']."/photo/storage/photos/".$filename;
         try{
@@ -55,15 +65,23 @@ class PhotosController extends Controller
         }
     }
 
-    function checkMail($email,$conn) {
-        $data = $conn->findOne(["shared.mail" => $email]);
-        if ($data) {
+    /**
+     * Return true if given mail exist in embbeded mail otherwise false
+     */
+    function checkMail($email,$data,$conn) {
+        $data1 = $conn->findOne(["_id" => $data['_id'],"shared.mail" => $email]);
+        if ($data1) {
             return true;
         } else {
             return false;
         }
     }
 
+    /**
+     * Take photo link and mail
+     * Check photo is public or not
+     * return show Photo
+     */
     function accessPhotoLogin(Request $request) {
         $filename = explode('/',$request->filename);
         $path1 = $_SERVER['HTTP_HOST']."/photo/storage/photos/".$filename[4];
@@ -75,7 +93,7 @@ class PhotosController extends Controller
             return response()->json(['message' => $ex->getMessage()],422);
         }
         if ($data && $data['private'] == 1) {
-            if ($this->checkMail($request->email,$conn)) {
+            if ($this->checkMail($request->email,$data,$conn)) {
                 $headers = ["Cache-Control" => "no-store, no-cache, must-revalidate, max-age=0"];
                 $path = storage_path("app/photos".'/'.$filename[4]);
                 if (file_exists($path)) {
@@ -87,6 +105,9 @@ class PhotosController extends Controller
         }
     }
 
+    /**
+     * Return Photo if its hidden
+     */
     function accessPhotoHidden(Request $request) {
         $filename = explode('/',$request->filename);
         $path1 = $_SERVER['HTTP_HOST']."/photo/storage/photos/".$filename[4];
@@ -106,6 +127,9 @@ class PhotosController extends Controller
         }
     }
 
+    /**
+     * take
+     */
     function generateLink(Request $request) {
         try{
             $collection = new DatabaseConnectionService();

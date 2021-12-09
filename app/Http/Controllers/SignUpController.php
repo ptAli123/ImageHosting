@@ -7,7 +7,9 @@ use App\Jobs\MailJob;
 use App\Services\DatabaseConnectionService;
 use Exception;
 use Illuminate\Http\Request;
-
+/**
+ * Take sign up Credentials and send mail confirmation mail to user
+ */
 class SignUpController extends Controller
 {
     function signUp(SignUpRequest $request) {

@@ -23,6 +23,7 @@ use Illuminate\Support\Facades\Route;
 //     return $request->user();
 // });
 
+
 Route::post('/sign-up',[SignUpController::class,'signUp'])->middleware("signUp");
 Route::get('/mail-confirmation/{email}/{varify_token}',[MailVarificationController::class,'confirmed']);
 
