@@ -21,11 +21,11 @@ class SignUpController extends Controller
         $varify_token=rand(100,100000);
         $collection = new DatabaseConnectionService();
         $conn = $collection->getConnection('users');
-        $path = $this->base64Fun($request->profileImage);
+        $path = $this->base64Fun($request->image);
         $document = array(
             "name" => $request->name,
             "email" => $request->email,
-            "profileImage" => $path,
+            "image" => $path,
             "password"=> hash::make($request->password),
             "age"=>$request->age,
             "mail_verify_token" => $varify_token,
@@ -34,7 +34,7 @@ class SignUpController extends Controller
         $conn->insertOne($document);
         $details = [
             'title' => 'confirmation Mail',
-            'link' => 'http://127.0.0.1:8000/api/mail-confirmation/'.$request->email.'/'.$varify_token
+            'link' => 'http://192.168.88.216:8080/api/mail-confirmation/'.$request->email.'/'.$varify_token
         ];
         try{
             //$mail = new MailJob($request->email,$details);

@@ -40,7 +40,7 @@ class ForgetPasswordController extends Controller
 
     /**
      * Take otp and new password
-     * verify otp and set new password
+     * verify otp, email and set new password
      * return success
      */
 
@@ -49,7 +49,7 @@ class ForgetPasswordController extends Controller
         try{
             $collection = new DatabaseConnectionService();
             $conn = $collection->getConnection('users');
-            $conn->updateOne(array("forget_password_varify_token"=>(int)$request->password_token),array('$set'=>array("password" => $newPassword)));
+            $conn->updateOne(array("email" => $request->email,"forget_password_varify_token"=>(int)$request->password_token),array('$set'=>array("password" => $newPassword)));
         }catch(Exception $ex){
             return response()->json(['message' => $ex->getMessage()],422);
         }
