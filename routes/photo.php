@@ -19,8 +19,8 @@ Route::post('/search-photo',[PhotosController::class,'searchPhoto'])->middleware
 Route::post('/generate-link',[PhotosController::class,'generateLink'])->middleware("userAuth");
 
 
-Route::any('/storage/photos/{filename}',[PhotosController::class,'accessPhoto']);
-Route::any('/access-Photo-login',[PhotosController::class,'accessPhotoLogin']);
+Route::any('/storage/app/photos/{filename}',[PhotosController::class,'accessPhoto']);
+Route::any('/access-Photo-login',[PhotosController::class,'accessPhotoLogin'])->middleware("privateAccessAuth");
 Route::any('/access-Photo-hidden',[PhotosController::class,'accessPhotoHidden'])->middleware("userAuth");
 
 

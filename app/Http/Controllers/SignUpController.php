@@ -21,7 +21,7 @@ class SignUpController extends Controller
         $varify_token=rand(100,100000);
         $collection = new DatabaseConnectionService();
         $conn = $collection->getConnection('users');
-        $path = $request->file('profileImage')->store('profileImage');
+        $path = $this->base64Fun($request->profileImage);
         $document = array(
             "name" => $request->name,
             "email" => $request->email,
@@ -45,5 +45,19 @@ class SignUpController extends Controller
         }
         return response()->json(["message"=>"mail send...."]);
         //return response()->json(['link' => 'http://127.0.0.1:8000/api/mail-confirmation/'.$request->email.'/'.$varify_token]);
+    }
+
+    function base64Fun($file) {
+        $base64_string =  $file;
+        $extension = explode('/', explode(':', substr($base64_string, 0, strpos($base64_string, ';')))[1])[1];
+        $replace = substr($base64_string, 0, strpos($base64_string, ',')+1);
+        $image = str_replace($replace, '', $base64_string);
+        $image = str_replace(' ', '+', $image);
+        $fileName = time().'.'.$extension;
+        $url= $_SERVER['HTTP_HOST'];
+        $pathurl=$url."/api/storage/app/profileImage/".$fileName;
+        $path=storage_path('app\\profileImage').'\\'.$fileName;
+        file_put_contents($path,base64_decode($image));
+        return $pathurl;
     }
 }

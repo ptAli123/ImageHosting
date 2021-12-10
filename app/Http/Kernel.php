@@ -66,5 +66,6 @@ class Kernel extends HttpKernel
         'signUp' => \App\Http\Middleware\SignUpMiddleware::class,
         'userAuth' => \App\Http\Middleware\UserAuthMiddleware::class,
         'forgetPasswordAuth' => \App\Http\Middleware\ForgetPasswordMiddleware::class,
+        'privateAccessAuth' => \App\Http\Middleware\PrivateAccessMiddleware::class,
     ];
 }

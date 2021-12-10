@@ -18,18 +18,14 @@ class PhotosController extends Controller
         try{
             $collection = new DatabaseConnectionService();
             $conn = $collection->getConnection('photos');
-            $photo = $request->file('photo');
-            $array = (array)$photo;
-            $photoName = $array["\x00Symfony\Component\HttpFoundation\File\UploadedFile\x00originalName"];
-            $photoData = explode('.',$photoName);
-            $photoPath = $request->file('photo')->store('photos');
-            $path=$_SERVER['HTTP_HOST']."/photo/storage/".$photoPath;
+            $path = $this->base64Fun($request->photo);
+            $imageArr = explode('.',$path);
             $document = array(
                 "user_id" => $request->data->_id,
                 "date" => date("Y-m-d"),
                 "time" => date("h:i:sa"),
-                "name" => $photoData[0],
-                "extensions" => $photoData[1],
+                "name" => $request->imageName,
+                "extensions" => $imageArr[4],
                 "hidden" => 1,
                 "photo" => $path,
                 );
@@ -46,7 +42,7 @@ class PhotosController extends Controller
      * return show Photo
      */
     function accessPhoto(Request $request, $filename) {
-        $path1 = $_SERVER['HTTP_HOST']."/photo/storage/photos/".$filename;
+        $path1 = $_SERVER['HTTP_HOST']."/photo/storage/app/photos/".$filename;
         try{
             $collection = new DatabaseConnectionService();
             $conn = $collection->getConnection('photos');
@@ -66,44 +62,16 @@ class PhotosController extends Controller
     }
 
     /**
-     * Take email, link related document and mongodb connection
-     * check mail exist in database or not
-     * Return true if exist otherwise false
-     */
-    function checkMail($email,$data,$conn) {
-        $data1 = $conn->findOne(["_id" => $data['_id'],"shared.mail" => $email]);
-        if ($data1) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    /**
-     * Take photo link and mail
+     * Take photo Name that generate by
      * Check photo is private or not
      * return show Photo or you are not allowed
      */
+
     function accessPhotoLogin(Request $request) {
-        $filename = explode('/',$request->filename);
-        $path1 = $_SERVER['HTTP_HOST']."/photo/storage/photos/".$filename[4];
-        try{
-            $collection = new DatabaseConnectionService();
-            $conn = $collection->getConnection('photos');
-            $data = $conn->findOne(array("photo" => $path1));
-        }catch(Exception $ex){
-            return response()->json(['message' => $ex->getMessage()],422);
-        }
-        if ($data && $data['private'] == 1) {
-            if ($this->checkMail($request->email,$data,$conn)) {
-                $headers = ["Cache-Control" => "no-store, no-cache, must-revalidate, max-age=0"];
-                $path = storage_path("app/photos".'/'.$filename[4]);
-                if (file_exists($path)) {
-                    return response()->download($path, null, $headers, null);
-                }
-            }
-        } else {
-            return response()->json(['message' => "you are not allowed"]);
+        $headers = ["Cache-Control" => "no-store, no-cache, must-revalidate, max-age=0"];
+        $path = storage_path("app/photos".'/'.$request->photoName);
+        if (file_exists($path)) {
+            return response()->download($path, null, $headers, null);
         }
     }
 
@@ -301,4 +269,17 @@ class PhotosController extends Controller
         return response()->success();
     }
 
+    function base64Fun($file) {
+        $base64_string =  $file;
+        $extension = explode('/', explode(':', substr($base64_string, 0, strpos($base64_string, ';')))[1])[1];
+        $replace = substr($base64_string, 0, strpos($base64_string, ',')+1);
+        $image = str_replace($replace, '', $base64_string);
+        $image = str_replace(' ', '+', $image);
+        $fileName = time().'.'.$extension;
+        $url= $_SERVER['HTTP_HOST'];
+        $pathurl=$url."/photo/storage/app/photos/".$fileName;
+        $path=storage_path('app\\photos').'\\'.$fileName;
+        file_put_contents($path,base64_decode($image));
+        return $pathurl;
+    }
 }
